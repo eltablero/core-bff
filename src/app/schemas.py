@@ -13,5 +13,6 @@ class Item(BaseModel):
     description: Optional[str] = None
     price: float = Field(..., gt=0)  # Precio debe ser mayor a 0
 
+
 class HealthCheck(BaseModel):
     status: str = "ok"

@@ -7,6 +7,10 @@ Asegúrate de estar dentro del entorno de poetry
 
 `poetry run pre-commit install`
 
+Check
+
+`poetry run pre-commit run --all-files`
+
 ## Run Tests
 
 `poetry run pytest -v`
