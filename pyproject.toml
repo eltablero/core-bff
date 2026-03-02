@@ -1,0 +1,36 @@
+[project]
+name = "core-bff"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Alejandro Morales",email = "ja.moralesv@hotmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi (>=0.135.1,<0.136.0)",
+    "uvicorn (>=0.41.0,<0.42.0)",
+    "pydantic (>=2.12.5,<3.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "app", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+mypy = "^1.8.0"
+ruff = "^0.3.0"
+httpx = "^0.28.1"
+pre-commit = "^4.5.1"
+
+[tool.ruff]
+line-length = 88
+lint.select = ["E", "F", "I"] # Errores, Pyflakes e Isort
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
