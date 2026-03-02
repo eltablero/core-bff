@@ -89,5 +89,6 @@ jobs:
           tags: |
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:latest
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Usamos el registry como origen y destino del caché
+          cache-from: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:buildcache
+          cache-to: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:buildcache,mode=max
