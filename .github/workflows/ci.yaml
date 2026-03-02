@@ -90,5 +90,6 @@ jobs:
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:latest
             ${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:${{ github.sha }}
           # Usamos el registry como origen y destino del caché
-          cache-from: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:buildcache
-          cache-to: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:buildcache,mode=max
+          # Eliminar estas lineas para probar sin cache, o si el registry no soporta esta funcionalidad
+          # cache-from: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:buildcache
+          # cache-to: type=registry,ref=${{ secrets.REGISTRY_LOGIN_SERVER }}/eltablero-core-bff:buildcache,mode=max
