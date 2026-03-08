@@ -14,7 +14,7 @@ def get_secret_from_vault(vault_url: str) -> str:
     """Recupera el secreto usando la identidad actual (CLI, Service Principal o MSI)"""
     credential = DefaultAzureCredential()
     client = SecretClient(vault_url=vault_url, credential=credential)
-    secret = client.get_secret(SECRET_NAME).value
+    secret = client.get_secret(SECRET_NAME).value or ""
     db_password = urllib.parse.quote_plus(secret)
     return db_password
 
@@ -66,11 +66,13 @@ def run_migrations_offline() -> None:
 
 def run_migrations_online() -> None:
     # Obtener configuración del alembic.ini
-    connectable_config = context.config.get_section(context.config.config_ini_section)
+    connectable_config = (
+        context.config.get_section(context.config.config_ini_section) or {}
+    )  # noqa: E501
 
     # Construir la URL final dinámicamente
     # Supongamos que en alembic.ini solo tienes la base: mssql+pyodbc://usuario:
-    base_url = connectable_config.get("sqlalchemy.url")
+    base_url = connectable_config.get("sqlalchemy.url") or "mssql+aioodbc://"
     vault_url = os.getenv("VAULT_URL") or "https://myvault.vault.azure.net/"
     server_name = os.getenv("DB_SERVER")
     database = os.getenv("DB_NAME")
