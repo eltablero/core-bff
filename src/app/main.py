@@ -1,25 +1,38 @@
-from fastapi import FastAPI
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
-from app.schemas import HealthCheck, Item
+from fastapi import FastAPI
+from sqlalchemy import text
+
+from app.api.endpoints import health
+from app.database import get_engine
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    # Startup: Verificar conexión a Azure SQL
+    try:
+        engine = get_engine()
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        print("🚀 Conexión a Azure SQL verificada exitosamente.")
+    except Exception as e:
+        print(f"❌ Error crítico al conectar a la DB: {e}")
+        # En producción, podrías querer que el contenedor falle aquí
+
+    yield
+
+    # Shutdown: Limpiar el pool de conexiones
+    await engine.dispose()
+    print("💤 Conexiones a la DB cerradas.")
+
 
 app = FastAPI(
     title="Core BFF API",
     description="Core Backend for Frontend para El Tablero",
     version="1.0.0",
-    # OpenAPI Doc está habilitado por defecto en /docs
     openapi_url="/api/v1/openapi.json",
+    lifespan=lifespan,
 )
 
-
-@app.get("/health", response_model=HealthCheck, tags=["System"])
-async def get_health() -> HealthCheck:
-    """
-    Endpoint para Liveness y Readiness probes en Azure Container Apps.
-    """
-    return HealthCheck(status="ok")
-
-
-@app.post("/items/", response_model=Item, tags=["Business Logic"])
-async def create_item(item: Item) -> Item:
-    # Aquí iría la lógica de persistencia
-    return item
+app.include_router(health.router, prefix="/api/v1", tags=["System"])

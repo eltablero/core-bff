@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -16,3 +16,4 @@ class Item(BaseModel):
 
 class HealthCheck(BaseModel):
     status: str = "ok"
+    checks: Optional[Dict[str, str]] = None

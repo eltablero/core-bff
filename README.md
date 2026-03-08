@@ -30,7 +30,30 @@ Check
 
 `docker build . -t eltablero-core-bff:latest`
 
-`docker run -it -p 8000:8000 eltablero-core-bff:latest`
+Usar este comando para obtener el appId, password, tenant para pruebas locales:
+
+```
+az ad sp create-for-rbac --name "sp-eltablero-dev" --role "Key Vault Secrets User" \
+  --scopes "/subscriptions/<tu-sub-id>/resourceGroups/<tu-rg>/providers/Microsoft.KeyVault/vaults/eltableroiackv"
+```
+
+```
+docker run -it -p 8000:8000 --network="host" \
+  -e AZURE_CLIENT_ID="<appId>" \
+  -e AZURE_CLIENT_SECRET="<password>" \
+  -e AZURE_TENANT_ID="<tenant>" \
+  -e VAULT_URL="https://eltableroiackv.vault.azure.net/" \
+  -e DB_SERVER="<servidor>.database.windows.net" \
+  -e DB_NAME="core-db" \
+  -e DB_USER="eltableroadmin" \
+  eltablero-core-bff:latest
+```
+
+Si la infra esta recién creada, utiliza el siguiente comando para ver tu ip y agregarla al firewall del servidor de base de datos:
+
+```
+curl ifconfig.me
+```
 
 
 ## Basic Tests
@@ -40,36 +63,24 @@ Check
 Request:
 
 ```sh
-curl -i http://localhost:8000/health
-```
-
-Response:
-```json
-{"status":"ok"}
-```
-
-### Items
-
-Request:
-
-```sh
-curl -i \
-  -X POST http://localhost:8000/items/ \
-  -H "Content-Type: application/json" \
-  -d '{
-        "id": 1,
-        "name": "Componente Frontend",
-        "description": "Un plugin para React",
-        "price": 25.5
-      }'
+curl -i http://localhost:8000/api/v1/liveness
 ```
 
 Response:
 ```json
 {
-    "id":1,
-    "name":"Componente Frontend",
-    "description":"Un plugin para React",
-    "price":25.5
+  "status":"alive"
+}
+```
+
+```sh
+curl -i http://localhost:8000/api/v1/health
+```
+
+Response:
+```json
+{
+  "status":"ok",
+  "checks": {}
 }
 ```
