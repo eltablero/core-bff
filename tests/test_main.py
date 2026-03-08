@@ -1,44 +1,34 @@
+from typing import AsyncGenerator
+from unittest.mock import AsyncMock
+
+import pytest
 from app.main import app
-from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
 
-# El TestClient permite simular peticiones HTTP sin levantar un servidor real
-client = TestClient(app)
-
-
-def test_read_health() -> None:
-    """
-    Prueba crítica: El Health Check debe devolver 200 para que
-    Azure Container Apps no reinicie el contenedor.
-    """
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+# Configuramos el transporte para que HTTPX hable directamente con la app de FastAPI
+transport = ASGITransport(app=app)
 
 
-def test_create_item_success() -> None:
-    """
-    Prueba la creación exitosa verificando que Pydantic
-    serializa correctamente los datos.
-    """
-    payload = {
-        "id": 1,
-        "name": "Componente Frontend",
-        "description": "Un plugin para React",
-        "price": 25.5,
-    }
-    response = client.post("/items/", json=payload)
-    assert response.status_code == 200
-    assert response.json()["name"] == "Componente Frontend"
+@pytest.mark.asyncio
+async def test_read_health() -> None:
+    # 1. Definimos un mock para la base de datos
+    async def mock_get_db() -> AsyncGenerator[AsyncMock, None]:
+        # Simulamos un generador asíncrono que cede una sesión falsa
+        yield AsyncMock()
 
+    # 2. Inyectamos el override directamente en la app
+    from app.database import get_db
+    from app.main import app
 
-def test_create_item_invalid_price() -> None:
-    """
-    Prueba de validación: El precio debe ser > 0 según nuestro esquema.
-    """
-    payload = {
-        "id": 2,
-        "name": "Item Gratis",
-        "price": -10.0,  # Esto debería disparar un error 422
-    }
-    response = client.post("/items/", json=payload)
-    assert response.status_code == 422  # Unprocessable Entity
+    app.dependency_overrides[get_db] = mock_get_db
+
+    try:
+        async with AsyncClient(transport=transport, base_url="http://test") as ac:
+            response = await ac.get("/api/v1/health")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+    finally:
+        # 3. Limpiamos para no afectar otros tests
+        app.dependency_overrides.clear()

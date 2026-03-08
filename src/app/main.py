@@ -5,13 +5,14 @@ from fastapi import FastAPI
 from sqlalchemy import text
 
 from app.api.endpoints import health
-from app.database import engine
+from app.database import get_engine
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Startup: Verificar conexión a Azure SQL
     try:
+        engine = get_engine()
         async with engine.begin() as conn:
             await conn.execute(text("SELECT 1"))
         print("🚀 Conexión a Azure SQL verificada exitosamente.")
