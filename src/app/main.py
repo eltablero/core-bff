@@ -1,11 +1,21 @@
+import uuid
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import Any, AsyncGenerator, Awaitable, Callable
 
-from fastapi import FastAPI
+import structlog
+from fastapi import FastAPI, Request
 from sqlalchemy import text
+from starlette.responses import Response as StarletteResponse
 
 from app.api.endpoints import health
+from app.core.logger import logger, setup_logging
 from app.database import get_engine
+
+# Definimos el tipo para call_next para mayor claridad
+# Recibe un Request y devuelve una Awaitable que resuelve en una Response
+CallNext = Callable[[Request[Any]], Awaitable[StarletteResponse]]
+
+setup_logging()
 
 
 @asynccontextmanager
@@ -36,3 +46,23 @@ app = FastAPI(
 )
 
 app.include_router(health.router, prefix="/api/v1", tags=["System"])
+
+
+@app.middleware("http")
+async def logging_middleware(
+    request: Request[Any], call_next: CallNext
+) -> StarletteResponse:
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    # Inyectamos el ID en el contexto del log
+    structlog.contextvars.clear_contextvars()
+    structlog.contextvars.bind_contextvars(request_id=request_id)
+
+    response = await call_next(request)
+
+    logger.info(
+        "request_processed",
+        path=request.url.path,
+        method=request.method,
+        status=response.status_code,
+    )  # noqa: E501
+    return response

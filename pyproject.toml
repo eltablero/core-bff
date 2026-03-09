@@ -19,6 +19,7 @@ dependencies = [
     "azure-keyvault-secrets (>=4.10.0,<5.0.0)",
     "aioodbc (>=0.5.0,<0.6.0)",
     "greenlet (>=3.3.2,<4.0.0)",
+    "structlog (>=25.5.0,<26.0.0)",
 ]
 
 [tool.poetry]
