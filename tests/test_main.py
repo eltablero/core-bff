@@ -24,7 +24,7 @@ async def test_read_health() -> None:
 
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:
-            response = await ac.get("/api/v1/health")
+            response = await ac.get("/health")
 
         assert response.status_code == 200
         data = response.json()
