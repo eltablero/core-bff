@@ -1,5 +1,6 @@
 from typing import Dict
 
+from app.core.logger import logger
 from app.database import get_db
 from app.schemas import HealthCheck
 from fastapi import APIRouter, Depends, Response, status
@@ -42,5 +43,10 @@ async def check_database_status(session: AsyncSession) -> bool:
     try:
         await session.execute(text("SELECT 1"))
         return True
-    except Exception:
+    except Exception as e:
+        logger.error(
+            "Database connection failed during health check",
+            exc_info=True,
+            error=str(e),
+        )
         return False
